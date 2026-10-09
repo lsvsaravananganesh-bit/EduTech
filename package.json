@@ -1,0 +1,16 @@
+{
+  "name": "eduwatch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EduWatch – Student Success Intelligence: Academic Early Warning and Student Performance Monitoring System",
+  "scripts": {
+    "install:all": "npm.cmd --prefix server install && npm.cmd --prefix client install",
+    "dev:server": "npm.cmd --prefix server run dev",
+    "dev:client": "npm.cmd --prefix client run dev",
+    "build:server": "npm.cmd --prefix server run build",
+    "build:client": "npm.cmd --prefix client run build",
+    "db:push": "npm.cmd --prefix server run db:push",
+    "db:seed": "npm.cmd --prefix server run db:seed",
+    "test": "npm.cmd --prefix server run test"
+  }
+}

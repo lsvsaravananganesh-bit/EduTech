@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* =========================================================================
+     LUMIXORA THEME SYSTEM (https://lumixora.in/)
+     ========================================================================= */
+
+  /* DEFAULT LIGHT MODE */
+  :root,
+  :root[data-theme="light"],
+  .light {
+    --bg-main: #f7f7fa;
+    --bg-sidebar: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f3f1ff;
+    --text-main: #15162a;
+    --text-secondary: #6b7280;
+    --text-muted: #98a2b3;
+    --border-color: #e7e7ee;
+    --border-subtle: #f0f0f5;
+
+    /* Lumixora Accents */
+    --brand-primary: #5b3df5;
+    --brand-primary-hover: #4b2ee8;
+    --brand-primary-soft: #efecff;
+    --brand-cta: #ff641a;
+    --brand-cta-hover: #ea5410;
+    --brand-cta-soft: #fff0e8;
+    --brand-success: #079669;
+    --brand-success-soft: #e8f8f2;
+    --brand-warning: #e99a00;
+    --brand-error: #e5484d;
+    --brand-aqua: #00b8a9;
+    --brand-lavender: #8b5cf6;
+    --brand-pinkpurple: #d946ef;
+
+    --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06);
+    --shadow-lg: 0 10px 30px -10px rgba(16, 24, 40, 0.08);
+
+    --bg-canvas: #f7f7fa;
+    --text-primary: #15162a;
+  }
+
+  /* LUMIXORA OBSIDIAN DARK MODE */
+  .dark,
+  :root[data-theme="dark"],
+  [data-theme="dark"] {
+    --bg-main: #090b14;
+    --bg-sidebar: #0b0e19;
+    --bg-surface: #101421;
+    --bg-card: #161b2b;
+    --bg-card-hover: #1d2335;
+    --text-main: #f7f7fa;
+    --text-secondary: #9ca3af;
+    --text-muted: #737b8c;
+    --border-color: #272d40;
+    --border-subtle: #1f2436;
+
+    /* Lumixora Luminous Neon Accents */
+    --brand-primary: #806bff;
+    --brand-primary-hover: #967aff;
+    --brand-primary-soft: #252044;
+    --brand-cta: #ff7133;
+    --brand-cta-hover: #ff854d;
+    --brand-cta-soft: #382117;
+    --brand-success: #34d399;
+    --brand-success-soft: #12372d;
+    --brand-warning: #fbbf24;
+    --brand-error: #fb7185;
+    --brand-aqua: #00f5d4;
+    --brand-lavender: #a78bfa;
+    --brand-pinkpurple: #c084fc;
+
+    --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 40px -10px rgba(0, 0, 0, 0.55);
+
+    --bg-canvas: #090b14;
+    --text-primary: #f7f7fa;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: 'Sora', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* =========================================================================
+   LUMIXORA GLASSMORPHISM & GLOW EFFECTS
+   ========================================================================= */
+
+.glass-panel {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 27, 43, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.light .glass-panel,
+[data-theme="light"] .glass-panel {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+}
+
+.glow-brand {
+  box-shadow: 0 0 25px -5px rgba(128, 107, 255, 0.4);
+}
+
+.glow-aqua {
+  box-shadow: 0 0 25px -5px rgba(0, 245, 212, 0.35);
+}
+
+.glow-cta {
+  box-shadow: 0 0 25px -5px rgba(255, 113, 51, 0.4);
+}
+
+/* Custom crisp Lumixora scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #090b14;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #272d40;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3a425b;
+}
+
+/* Smooth selection */
+::selection {
+  background-color: rgba(128, 107, 255, 0.35);
+  color: inherit;
+}

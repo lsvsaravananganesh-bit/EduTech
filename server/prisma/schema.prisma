@@ -1,0 +1,429 @@
+// SmartBro – Student Success Intelligence
+// Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  fullName       String
+  email          String    @unique
+  passwordHash   String
+  role           String    // STUDENT, TEACHER, SUBJECT_TEACHER, CLASS_TEACHER, ADMIN
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  studentProfile Student?
+  teacherProfile Teacher?
+  notifications  Notification[]
+
+  @@index([role])
+}
+
+model Student {
+  id               String               @id @default(uuid())
+  userId           String               @unique
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentNumber    String               @unique
+  classId          String
+  classRoom        ClassRoom            @relation(fields: [classId], references: [id])
+  section          String
+  enrollmentStatus String               @default("ACTIVE")
+
+  enrollments        Enrollment[]
+  assessmentResults  AssessmentResult[]
+  attendanceRecords  AttendanceRecord[]
+  teacherFeedbacks   TeacherFeedback[]
+  improvementPlans   ImprovementPlan[]
+  riskEvaluations    RiskEvaluation[]
+  interventions      Intervention[]
+  
+  // SmartBro additions
+  streakData         StreakData?
+  studySessions      StudySession[]
+  milestones         StreakMilestone[]
+  aiChats            AiChatMessage[]
+
+  @@index([classId])
+}
+
+model Teacher {
+  id             String                     @id @default(uuid())
+  userId         String                     @unique
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeNumber String                     @unique
+
+  classAssignments       ClassTeacherAssignment[]
+  subjectAssignments     SubjectTeacherAssignment[]
+  assessmentsCreated     Assessment[]
+  feedbacksGiven         TeacherFeedback[]
+  plansCreated           ImprovementPlan[]
+  interventionsAssigned  Intervention[]             @relation("AssignedTeacher")
+  interventionsCreated   Intervention[]             @relation("CreatedTeacher")
+  interventionNotes      InterventionNote[]
+}
+
+model AcademicYear {
+  id         String     @id @default(uuid())
+  name       String     @unique // e.g. "2024-2025"
+  startDate  DateTime
+  endDate    DateTime
+  isCurrent  Boolean    @default(true)
+
+  terms               Term[]
+  classRooms          ClassRoom[]
+  subjectAssignments  SubjectTeacherAssignment[]
+  enrollments         Enrollment[]
+  assessments         Assessment[]
+}
+
+model Term {
+  id             String       @id @default(uuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name           String       // "Term 1", "Term 2", etc.
+  startDate      DateTime
+  endDate        DateTime
+
+  assessments    Assessment[]
+
+  @@index([academicYearId])
+}
+
+model ClassRoom {
+  id             String       @id @default(uuid())
+  name           String       // "Grade 10"
+  section        String       // "A"
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  students                Student[]
+  classTeacherAssignments ClassTeacherAssignment[]
+  subjectTeacherAssignments SubjectTeacherAssignment[]
+  enrollments             Enrollment[]
+  assessments             Assessment[]
+  attendanceSessions      AttendanceSession[]
+  interventions           Intervention[]
+
+  @@unique([name, section, academicYearId])
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  name        String
+  subjectCode String   @unique
+  description String?
+
+  subjectTeacherAssignments SubjectTeacherAssignment[]
+  assessments                Assessment[]
+  attendanceSessions         AttendanceSession[]
+  teacherFeedbacks           TeacherFeedback[]
+  improvementPlans           ImprovementPlan[]
+  riskEvaluations            RiskEvaluation[]
+  interventions              Intervention[]
+  studySessions              StudySession[]
+}
+
+model ClassTeacherAssignment {
+  id        String    @id @default(uuid())
+  teacherId String
+  teacher   Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classId   String
+  classRoom ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, classId])
+}
+
+model SubjectTeacherAssignment {
+  id             String       @id @default(uuid())
+  teacherId      String
+  teacher        Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classId        String
+  classRoom      ClassRoom    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId, classId, academicYearId])
+}
+
+model Enrollment {
+  id             String       @id @default(uuid())
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId        String
+  classRoom      ClassRoom    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  status         String       @default("ACTIVE") // ACTIVE, TRANSFERRED, COMPLETED
+
+  @@unique([studentId, classId, academicYearId])
+}
+
+model Assessment {
+  id             String       @id @default(uuid())
+  subjectId      String
+  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classId        String
+  classRoom      ClassRoom    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  termId         String
+  term           Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  teacherId      String
+  teacher        Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  name           String
+  assessmentDate DateTime
+  maximumMarks   Float
+  status         String       @default("PUBLISHED") // DRAFT, PUBLISHED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  results          AssessmentResult[]
+  teacherFeedbacks TeacherFeedback[]
+
+  @@index([subjectId, classId])
+}
+
+model AssessmentResult {
+  id            String     @id @default(uuid())
+  assessmentId  String
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  marksObtained Float
+  feedback      String?
+  enteredAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([assessmentId, studentId])
+  @@index([studentId])
+}
+
+model AttendanceSession {
+  id          String    @id @default(uuid())
+  classId     String
+  classRoom   ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  sessionDate DateTime
+  sessionType String    @default("REGULAR") // REGULAR, LAB, REVISION
+  createdBy   String
+
+  records AttendanceRecord[]
+
+  @@index([classId, sessionDate])
+}
+
+model AttendanceRecord {
+  id         String            @id @default(uuid())
+  sessionId  String
+  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status     String            // PRESENT, ABSENT, EXCUSED, LATE
+  recordedAt DateTime          @default(now())
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+}
+
+model TeacherFeedback {
+  id           String      @id @default(uuid())
+  studentId    String
+  student      Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId    String
+  subject      Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId    String
+  teacher      Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  feedbackText String
+  visibility   String      @default("SHARED") // SHARED, TEACHER_ONLY
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([studentId, subjectId])
+}
+
+model ImprovementPlan {
+  id         String            @id @default(uuid())
+  studentId  String
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId  String?
+  subject    Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  createdBy  String
+  teacher    Teacher           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  goal       String
+  targetDate DateTime
+  status     String            @default("IN_PROGRESS") // PENDING, IN_PROGRESS, COMPLETED, REVIEWED
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  tasks ImprovementTask[]
+
+  @@index([studentId])
+}
+
+model ImprovementTask {
+  id                String          @id @default(uuid())
+  improvementPlanId String
+  improvementPlan   ImprovementPlan @relation(fields: [improvementPlanId], references: [id], onDelete: Cascade)
+  description       String
+  status            String          @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  dueDate           DateTime?
+  completedAt       DateTime?
+
+  @@index([improvementPlanId])
+}
+
+model RiskEvaluation {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  riskLevel   String   // ON_TRACK, NEEDS_ATTENTION, HIGH_PRIORITY_SUPPORT (also LOW_CONCERN, HIGH_CONCERN for compatibility)
+  reason      String
+  evidence    String
+  evaluatedAt DateTime @default(now())
+
+  @@index([studentId, evaluatedAt])
+}
+
+model Intervention {
+  id          String            @id @default(uuid())
+  studentId   String
+  student     Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId     String
+  classRoom   ClassRoom         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  createdBy   String
+  creator     Teacher           @relation("CreatedTeacher", fields: [createdBy], references: [id], onDelete: Cascade)
+  assignedTo  String?
+  assignee    Teacher?          @relation("AssignedTeacher", fields: [assignedTo], references: [id], onDelete: SetNull)
+  concern     String
+  action      String
+  status      String            @default("OPEN") // OPEN, IN_PROGRESS, MONITORING, RESOLVED
+  followUpDate DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  notes InterventionNote[]
+
+  @@index([classId, status])
+  @@index([studentId])
+}
+
+model InterventionNote {
+  id             String       @id @default(uuid())
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         Teacher      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  note           String
+  createdAt      DateTime     @default(now())
+
+  @@index([interventionId])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ----------------------------------------------------------------------
+// SmartBro Additions: Streak Journey, AI Companion, Datasets & System Config
+// ----------------------------------------------------------------------
+
+model StreakData {
+  id                  String    @id @default(uuid())
+  studentId           String    @unique
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  currentStreak       Int       @default(0)
+  longestStreak       Int       @default(0)
+  lastCheckInDate     DateTime?
+  weeklyGoalMinutes   Int       @default(120) // e.g. 120 mins/week
+  rewardPoints        Int       @default(0)
+  totalMinutesStudied Int       @default(0)
+  remindersPaused     Boolean   @default(false)
+  updatedAt           DateTime  @updatedAt
+}
+
+model StudySession {
+  id              String    @id @default(uuid())
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId       String?
+  subject         Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  durationMinutes Int
+  activityType    String    // REVISE_TOPIC, SOLVE_QUESTIONS, REVIEW_MISTAKES, CLASS_ATTENDANCE, ASSIGNMENT
+  topic           String?
+  notes           String?
+  sessionDate     DateTime
+  createdAt       DateTime  @default(now())
+
+  @@index([studentId, sessionDate])
+}
+
+model StreakMilestone {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  milestoneKey String   // FIRST_STEP, THREE_DAY_EXPLORER, SEVEN_DAY_BUILDER, CONSISTENCY_CHAMPION, COMEBACK_HERO
+  title       String
+  description String
+  icon        String   @default("award")
+  unlockedAt  DateTime @default(now())
+
+  @@unique([studentId, milestoneKey])
+}
+
+model DatasetImport {
+  id          String   @id @default(uuid())
+  fileName    String
+  datasetType String   // KAGGLE_EXAMS, INSTITUTIONAL
+  rowCount    Int
+  validRows   Int
+  invalidRows Int
+  metadata    String   // JSON string of dataset insights & mappings
+  status      String   @default("COMPLETED")
+  importedBy  String
+  createdAt   DateTime @default(now())
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   // JSON string or scalar
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AiChatMessage {
+  id               String   @id @default(uuid())
+  studentId        String
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sender           String   // USER, SMARTBRO
+  message          String
+  suggestedActions String?  // Optional JSON string of small actions
+  createdAt        DateTime @default(now())
+
+  @@index([studentId, createdAt])
+}
